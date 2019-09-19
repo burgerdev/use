@@ -1,0 +1,64 @@
+#!/bin/sh
+
+set -eu
+
+help () {
+cmd=`basename "$0"`
+help="Usage: $cmd {base name} {qualifier}
+  or:  $cmd {base name}
+Use a specific version of a binary, or list all avaialable versions of a binary.
+
+Environment variables:
+  USECLI_BIN_DIR
+  USECLI_TARGET_DIR
+"
+echo "$help" >&2
+}
+
+if [ $# -lt 1 ]
+then
+help
+exit 1
+fi
+
+base="$1"
+targetdir="${USECLI_TARGET_DIR:-$HOME/.local/bin}"
+bindir="${USECLI_BIN_DIR:-$targetdir}"
+
+if [ $# -lt 2 ]
+then
+#TODO a bit more sophisticated search
+ls -1 "$bindir" | grep -F "$base-"
+exit 0
+fi
+
+qualifier="$2"
+
+target="$targetdir/$base"
+binary="$bindir/$base-$qualifier"
+
+# sanity checks
+if [ -e "$target" -a ! -L "$target" ]
+then
+echo "Refusing to overwrite '$target'." >&2
+exit 2
+fi
+
+for d in "$bindir" "$targetdir"
+do
+if [ ! -d "$d" ]
+then
+echo "Directory '$d' does not exist." >&2
+exit 2
+fi
+done
+
+if [ ! -e "$binary" ]
+then
+echo "Link target '$binary' does not exist." >&2
+exit 3
+fi
+
+rm -f "$target"
+ln -s "$binary" "$target"
+
