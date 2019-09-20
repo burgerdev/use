@@ -1,0 +1,37 @@
+#!/bin/sh
+
+set -eu
+
+iam=`basename $0`
+
+if [ $# -lt 2 ]
+then
+echo "Usage: $iam {name} {version}" >&2
+exit 1
+fi
+
+base="$1"
+version="$2"
+
+helperdir="${GETCLI_HELPER_DIR:-$HOME/.local/bin}"
+bindirdefault="${USECLI_BIN_DIR:-$HOME/.local/bin}"
+bindir="${GETCLI_TARGET_DIR:-$bindirdefault}"
+
+#TODO: verify that directories exist
+
+target="$bindir/$base-$version"
+if [ -e "$target" ]
+then
+echo "Target binary '$target' already exists.'" >&2
+exit 2
+fi
+
+helper="$helperdir/$iam-$base"
+if [ ! -e "$helper" ]
+then
+echo "Helper '$helper' not found.'" >&2
+exit 2
+fi
+
+"$helper" "$version" >"$target"
+chmod +x "$target"
